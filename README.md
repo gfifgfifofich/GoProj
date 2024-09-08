@@ -5,7 +5,7 @@ chmod +x ./scripts/BuildAndRun.sh
 ```
 Либо продублировать все команды с файла ./scripts/BuildAndRun.sh в консоли, в случае другой операционной системмы
 # requered packages
-Go, docker, dbmate
+Go, docker, dbmate (для создания, но в бд одна таблица, можно просто и завести запрос из db/migrations/20240907070455_DB.sql)
 # misc
 .env file contains 
 ```env
@@ -18,7 +18,7 @@ SECRET = 'jwjnadfgh08yuegr0h0ubxcvasd'
 post /auth/sign-up
 body
 {
-    "name": "Testname1",
+    "email": "Testmail@example.com",
     "password": "Testpassword1"
 }
 
@@ -28,3 +28,8 @@ post /task/access?guid=5c287eae-0520-4457-8efc-b53801716550
 для обновления access токена:
 post /task/refresh
 
+при использовании refresh с другим айпишником, будет роизводиться попытка отправки email на почту пользователя
+
+Всё что касается обработки запросов и прочего с интернетов - в папке handler
+Всё что касается внутренней обработки (создание токенов, хеширование и прочее) - в папке services
+Всё что касается общения с бд - в папке repository
