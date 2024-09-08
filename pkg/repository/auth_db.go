@@ -16,7 +16,7 @@ type AuthDb struct {
 func NewAuthDb(pDB *sqlx.DB) *AuthDb {
 	return &AuthDb{pDB: pDB}
 }
-func (pAuthDB *AuthDb) CreateUser(user goproj.User) (int, error) {
+func (pAuthDB *AuthDb) CreateUser(user goproj.User) (string, error) {
 	query := fmt.Sprintf("INSERT INTO %s (name,guid,password_hash) values($1,$2,$3) RETURNING id", usersTable)
 	var id int
 	guid, err := uuid.NewV4()
@@ -26,9 +26,9 @@ func (pAuthDB *AuthDb) CreateUser(user goproj.User) (int, error) {
 	row := pAuthDB.pDB.QueryRow(query, user.Email, guid, user.Password)
 
 	if err := row.Scan(&id); err != nil {
-		return 0, err
+		return "", err
 	}
-	return id, nil
+	return guid.String(), nil
 }
 
 func ConvertToPostgresStringArray(strarr []string) (string, error) {

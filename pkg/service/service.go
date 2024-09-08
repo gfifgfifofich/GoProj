@@ -8,7 +8,7 @@ import (
 )
 
 type Authorization interface {
-	CreateUser(user goproj.User) (int, error)
+	CreateUser(user goproj.User) (string, error)
 	Access(guid string, clientIP string) (string, string, time.Time, time.Time, error)
 	Refresh(usrRToken string, aToken string, clientIP string) (string, string, time.Time, time.Time, error)
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type Authorization interface {
-	CreateUser(user goproj.User) (int, error)
+	CreateUser(user goproj.User) (string, error)
 	GetUserRTokensByGUID(guid string) ([]string, error)
 	UpdateUserRefreshTokens(guid string, rTokens []string) error
 	GetUsersEmailByGUID(guid string) (string, error)

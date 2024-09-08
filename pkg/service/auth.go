@@ -26,7 +26,7 @@ func NewAuthService(repo repository.Authorization) *AuthService {
 	return &AuthService{repo: repo}
 }
 
-func (pauthService *AuthService) CreateUser(user goproj.User) (int, error) {
+func (pauthService *AuthService) CreateUser(user goproj.User) (string, error) {
 	user.Password = pauthService.generatePasswordHash(user.Password)
 
 	return pauthService.repo.CreateUser(user)
