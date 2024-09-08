@@ -9,6 +9,7 @@ type Authorization interface {
 	CreateUser(user goproj.User) (int, error)
 	GetUserRTokensByGUID(guid string) ([]string, error)
 	UpdateUserRefreshTokens(guid string, rTokens []string) error
+	GetUsersEmailByGUID(guid string) (string, error)
 }
 
 type Repository struct {

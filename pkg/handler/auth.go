@@ -54,7 +54,7 @@ func (pHandler *Handler) access(pCtx *gin.Context) {
 
 	var guid string = qguid[0]
 
-	atSigned, rtSigned, atExpiration, rtExpiration, err := pHandler.pservice.Access(guid)
+	atSigned, rtSigned, atExpiration, rtExpiration, err := pHandler.pservice.Access(guid, pCtx.ClientIP())
 	if err != nil {
 		Response(pCtx, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -102,7 +102,7 @@ func (pHandler *Handler) refresh(pCtx *gin.Context) {
 		return
 	}
 
-	atSigned, _, atExpiration, _, err := pHandler.pservice.Refresh(tRefresh.Value, tAccess.Value)
+	atSigned, _, atExpiration, _, err := pHandler.pservice.Refresh(tRefresh.Value, tAccess.Value, pCtx.ClientIP())
 	if err != nil {
 		Response(pCtx, http.StatusUnauthorized, "Unauthorized3")
 		return

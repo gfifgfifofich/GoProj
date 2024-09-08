@@ -23,7 +23,7 @@ func (pAuthDB *AuthDb) CreateUser(user goproj.User) (int, error) {
 	if err != nil {
 		log.Print("Failed to generate guid")
 	}
-	row := pAuthDB.pDB.QueryRow(query, user.Name, guid, user.Password)
+	row := pAuthDB.pDB.QueryRow(query, user.Email, guid, user.Password)
 
 	if err := row.Scan(&id); err != nil {
 		return 0, err
@@ -89,6 +89,16 @@ func (pAuthDB *AuthDb) GetUserRTokensByGUID(guid string) ([]string, error) {
 		return []string{}, err
 	}
 	return rTokens, nil
+}
+func (pAuthDB *AuthDb) GetUsersEmailByGUID(guid string) (string, error) {
+	query := fmt.Sprintf("SELECT name FROM %s where guid = $1", usersTable)
+	row := pAuthDB.pDB.QueryRow(query, guid)
+	var str string
+	if err := row.Scan(&str); err != nil {
+		log.Print("Failed to read Email from db")
+		return "", err
+	}
+	return str, nil
 }
 
 func (pAuthDB *AuthDb) UpdateUserRefreshTokens(guid string, rTokens []string) error {

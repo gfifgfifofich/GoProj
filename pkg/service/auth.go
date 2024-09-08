@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/smtp"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -79,7 +80,7 @@ func CreateRefreshTokenFromData(guid string, id string, t int64) []byte {
 	return rtDataBaseString
 }
 
-func (pauthService *AuthService) Access(guid string) (string, string, time.Time, time.Time, error) {
+func (pauthService *AuthService) Access(guid string, clientIP string) (string, string, time.Time, time.Time, error) {
 
 	rtExpiration := time.Now().Add(5 * time.Hour)
 
@@ -107,6 +108,7 @@ func (pauthService *AuthService) Access(guid string) (string, string, time.Time,
 
 	rtClaims := &сlaims{
 		UserID: guid,
+		UserIP: clientIP,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: rtExpiration.Unix(),
 			Id:        string(linkBytes),
@@ -127,6 +129,7 @@ func (pauthService *AuthService) Access(guid string) (string, string, time.Time,
 	atExpiration := time.Now().Add(5 * time.Minute)
 	atClaims := &сlaims{
 		UserID: guid,
+		UserIP: clientIP,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: atExpiration.Unix(),
 			Id:        string(linkBytes),
@@ -166,7 +169,7 @@ func (pauthService *AuthService) Access(guid string) (string, string, time.Time,
 
 // usr token is jwt, db token is "custom" and bcrypted
 // access is jwt, only on user
-func (pauthService *AuthService) Refresh(usrRToken string, aToken string) (string, string, time.Time, time.Time, error) {
+func (pauthService *AuthService) Refresh(usrRToken string, aToken string, clientIP string) (string, string, time.Time, time.Time, error) {
 
 	rtClaims, err := getClaims(usrRToken)
 
@@ -181,7 +184,7 @@ func (pauthService *AuthService) Refresh(usrRToken string, aToken string) (strin
 		log.Printf("access token parsing failed: %s", err.Error())
 		return "", "", time.Now(), time.Now(), err
 	}
-
+	// if anything is different in tokens, they are invalid
 	if rtClaims.UserID != atClaims.UserID || rtClaims.Id != atClaims.Id {
 		log.Printf("Unauthorized, invalid tokens")
 		return "", "", time.Now(), time.Now(), err
@@ -209,10 +212,45 @@ func (pauthService *AuthService) Refresh(usrRToken string, aToken string) (strin
 		log.Printf("refresh token not found in db: %s", err.Error())
 		return "", "", time.Now(), time.Now(), errors.New("refresh not found in db")
 	}
+
+	// if IP is different, notify
+	if clientIP != rtClaims.UserIP {
+		from := "Notifier@example.com"
+
+		user := "9c1d45eaf7af5b"
+		password := "ad62926fa75d0f"
+
+		uEmail, err := pauthService.repo.GetUsersEmailByGUID(rtClaims.UserID)
+		if err != nil {
+			log.Printf("failed to get users email from db: %s", err.Error())
+		}
+
+		to := []string{
+			uEmail,
+		}
+
+		addr := "smtp.mailtrap.io:2525"
+		host := "smtp.mailtrap.io"
+
+		msg := []byte("From: Notifier@example.com\r\n" +
+			"To: " + uEmail +
+			"Subject: Test mail\r\n\r\n" +
+			"Email body\r\n")
+
+		auth := smtp.PlainAuth("", user, password, host)
+
+		err = smtp.SendMail(addr, auth, from, to, msg)
+		if err != nil {
+			log.Printf("failed to notify user of IP change: %s", err.Error())
+		}
+	}
+
+	//new access token
 	atExpiration := time.Now().Add(5 * time.Minute)
 
 	atClaims = &сlaims{
 		UserID: atClaims.UserID,
+		UserIP: clientIP,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: atExpiration.Unix(),
 			Id:        rtClaims.Id,

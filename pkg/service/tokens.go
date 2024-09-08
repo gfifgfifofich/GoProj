@@ -10,9 +10,9 @@ import (
 
 var jwtKey = []byte(string(os.Getenv("SECRET")))
 
-// jwt.StandardClaims для exp и jti
 type сlaims struct {
 	UserID string `json:"uid"`
+	UserIP string `json:"uip"`
 	jwt.StandardClaims
 }
 

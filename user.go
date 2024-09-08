@@ -2,7 +2,7 @@ package goproj
 
 type User struct {
 	GUID           string   `json:"guid"`
-	Name           string   `json:"name"`
+	Email          string   `json:"email"`
 	Password       string   `json:"password"`
 	RefreshTockens []string `json:"rts"`
 }
