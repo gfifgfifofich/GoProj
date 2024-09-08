@@ -13,6 +13,7 @@ DATABASE_URL='postgres://postgres:qwerty@0.0.0.0:5436/postgres?sslmode=disable'
 DB_PASSWORD=qwerty
 SECRET = 'jwjnadfgh08yuegr0h0ubxcvasd'
 ```
+DATABASE_URL используется в dbmate, SECRET - jwtkey
 
 для создания пользователя
 post /auth/sign-up
