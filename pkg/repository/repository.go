@@ -16,8 +16,8 @@ type Repository struct {
 	Authorization
 }
 
-func NewRepository(pdatabase *sqlx.DB) *Repository {
+func NewRepository(database *sqlx.DB) *Repository {
 	return &Repository{
-		Authorization: NewAuthDb(pdatabase),
+		Authorization: NewAuthDb(database),
 	}
 }

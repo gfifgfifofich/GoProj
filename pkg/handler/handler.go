@@ -6,23 +6,23 @@ import (
 )
 
 type Handler struct {
-	pservice *service.Service
+	service *service.Service
 }
 
-func NewHandler(pservice *service.Service) *Handler {
-	return &Handler{pservice: pservice}
+func NewHandler(service *service.Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (phandler *Handler) InitRoutes() *gin.Engine {
+func (handler *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 	auth := router.Group("/auth")
 	{
-		auth.POST("/sign-up", phandler.signUp)
+		auth.POST("/sign-up", handler.signUp)
 	}
 	task := router.Group("/task")
 	{
-		task.POST("/access", phandler.access)
-		task.POST("/refresh", phandler.refresh)
+		task.POST("/access", handler.access)
+		task.POST("/refresh", handler.refresh)
 	}
 	return router
 }

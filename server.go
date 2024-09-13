@@ -7,21 +7,21 @@ import (
 )
 
 type Server struct {
-	phttpServer *http.Server // same pointers?
+	httpServer *http.Server
 }
 
-func (pserver *Server) Run(port string, handler http.Handler) error {
-	pserver.phttpServer = &http.Server{
+func (server *Server) Run(port string, handler http.Handler) error {
+	server.httpServer = &http.Server{
 		Addr:           ":" + port,
 		Handler:        handler,
-		MaxHeaderBytes: 1 << 20,          // same bit manipulations?
-		ReadTimeout:    10 * time.Second, // no in std::something::something::chrono::chrono_literals?
+		MaxHeaderBytes: 1 << 20,
+		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 	}
 
-	return pserver.phttpServer.ListenAndServe()
+	return server.httpServer.ListenAndServe()
 }
 
-func (pserver *Server) Shutdown(ctx context.Context) error {
-	return pserver.phttpServer.Shutdown(ctx)
+func (server *Server) Shutdown(ctx context.Context) error {
+	return server.httpServer.Shutdown(ctx)
 }

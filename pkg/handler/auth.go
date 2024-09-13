@@ -9,28 +9,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (pHandler *Handler) signUp(pCtx *gin.Context) {
+func (handler *Handler) signUp(ctx *gin.Context) {
 	var input goproj.User
-	if err := pCtx.BindJSON(&input); err != nil {
-		Response(pCtx, http.StatusBadRequest, "invalid input body")
+	if err := ctx.BindJSON(&input); err != nil {
+		Response(ctx, http.StatusBadRequest, "invalid input body")
 		log.Printf("error binging json: %s", err.Error())
 		return
 	}
-	if pHandler == nil {
+	if handler == nil {
 		log.Fatal("pHandler is nil")
 	}
-	if pHandler.pservice == nil {
+	if handler.service == nil {
 		log.Fatal("pHandler.pservice is nil")
 	}
-	if pHandler.pservice.Authorization == nil {
+	if handler.service.Authorization == nil {
 		log.Fatal("pHandler.pservice.Authorization is nil")
 	}
-	id, err := pHandler.pservice.Authorization.CreateUser(input)
+	id, err := handler.service.Authorization.CreateUser(input)
 	if err != nil {
-		Response(pCtx, http.StatusInternalServerError, err.Error())
+		Response(ctx, http.StatusInternalServerError, err.Error())
 		log.Fatalf("internal error: %s", err.Error())
 	}
-	pCtx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"id": id,
 	})
 }
@@ -45,35 +45,37 @@ write coockies									handler
 communicate back to user about state of request handler
 }
 */
-func (pHandler *Handler) access(pCtx *gin.Context) {
-	qguid, ok := pCtx.Request.URL.Query()["guid"]
+func (handler *Handler) access(ctx *gin.Context) {
+	qguid, ok := ctx.Request.URL.Query()["guid"]
 	if !ok || len(qguid[0]) < 1 {
-		Response(pCtx, http.StatusBadRequest, "invalid input")
+		Response(ctx, http.StatusBadRequest, "invalid input")
 		return
 	}
 
 	var guid string = qguid[0]
 
-	atSigned, rtSigned, atExpiration, rtExpiration, err := pHandler.pservice.Access(guid, pCtx.ClientIP())
+	AccessTokenSigned, RefreshTokenSigned, AccessExpiration, RefreshExpiration, err := handler.service.Access(guid, ctx.ClientIP())
 	if err != nil {
-		Response(pCtx, http.StatusInternalServerError, "Internal Server Error")
+		Response(ctx, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	http.SetCookie(pCtx.Writer, &http.Cookie{
-		Name:     "tAccess",
-		Value:    atSigned,
-		Expires:  atExpiration,
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "AccessToken",
+		Value:    AccessTokenSigned,
+		Expires:  AccessExpiration,
 		HttpOnly: true,
+		Secure:   true,
 	})
-	http.SetCookie(pCtx.Writer, &http.Cookie{
-		Name:     "tRefresh",
-		Value:    rtSigned,
-		Expires:  rtExpiration,
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "RefreshToken",
+		Value:    RefreshTokenSigned,
+		Expires:  RefreshExpiration,
 		HttpOnly: true,
+		Secure:   true,
 	})
 
-	pCtx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"status": "success",
 	})
 
@@ -89,33 +91,33 @@ get coockies									handler
 save coockies									handler
 }
 */
-func (pHandler *Handler) refresh(pCtx *gin.Context) {
+func (handler *Handler) refresh(ctx *gin.Context) {
 
-	tRefresh, err := pCtx.Request.Cookie("tRefresh")
+	RefreshToken, err := ctx.Request.Cookie("RefreshToken")
 	if err != nil {
-		Response(pCtx, http.StatusUnauthorized, "Unauthorized1")
+		Response(ctx, http.StatusUnauthorized, "call Access route first")
 		return
 	}
-	tAccess, err := pCtx.Request.Cookie("tAccess")
+	AccessToken, err := ctx.Request.Cookie("AccessToken")
 	if err != nil {
-		Response(pCtx, http.StatusUnauthorized, fmt.Sprintf("Unauthorized2: %s", err.Error()))
-		return
-	}
-
-	atSigned, _, atExpiration, _, err := pHandler.pservice.Refresh(tRefresh.Value, tAccess.Value, pCtx.ClientIP())
-	if err != nil {
-		Response(pCtx, http.StatusUnauthorized, "Unauthorized3")
+		Response(ctx, http.StatusUnauthorized, "call Access route first")
 		return
 	}
 
-	http.SetCookie(pCtx.Writer, &http.Cookie{
-		Name:     "tAccess",
-		Value:    atSigned,
-		Expires:  atExpiration,
+	AcessTokenSigned, AccessTokenExpiration, err := handler.service.Refresh(RefreshToken.Value, AccessToken.Value, ctx.ClientIP())
+	if err != nil {
+		Response(ctx, http.StatusUnauthorized, fmt.Sprintf("Unauthorized: %s", err.Error()))
+		return
+	}
+
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "AccessToken",
+		Value:    AcessTokenSigned,
+		Expires:  AccessTokenExpiration,
 		HttpOnly: true,
+		Secure:   true,
 	})
-
-	pCtx.JSON(http.StatusOK, map[string]interface{}{
+	ctx.JSON(http.StatusOK, map[string]interface{}{
 		"status": "success",
 	})
 }

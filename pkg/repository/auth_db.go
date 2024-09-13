@@ -10,20 +10,20 @@ import (
 )
 
 type AuthDb struct {
-	pDB *sqlx.DB
+	DB *sqlx.DB
 }
 
-func NewAuthDb(pDB *sqlx.DB) *AuthDb {
-	return &AuthDb{pDB: pDB}
+func NewAuthDb(DB *sqlx.DB) *AuthDb {
+	return &AuthDb{DB: DB}
 }
-func (pAuthDB *AuthDb) CreateUser(user goproj.User) (string, error) {
+func (AuthDB *AuthDb) CreateUser(user goproj.User) (string, error) {
 	query := fmt.Sprintf("INSERT INTO %s (name,guid,password_hash) values($1,$2,$3) RETURNING id", usersTable)
 	var id int
 	guid, err := uuid.NewV4()
 	if err != nil {
 		log.Print("Failed to generate guid")
 	}
-	row := pAuthDB.pDB.QueryRow(query, user.Email, guid, user.Password)
+	row := AuthDB.DB.QueryRow(query, user.Email, guid, user.Password)
 
 	if err := row.Scan(&id); err != nil {
 		return "", err
@@ -31,6 +31,7 @@ func (pAuthDB *AuthDb) CreateUser(user goproj.User) (string, error) {
 	return guid.String(), nil
 }
 
+// converts a string array into single string, that can be sent to Postgres and stored as array there
 func ConvertToPostgresStringArray(strarr []string) (string, error) {
 	//format  '{"text1","text2"}';
 	first := true
@@ -55,6 +56,7 @@ func ConvertToPostgresStringArray(strarr []string) (string, error) {
 	return outstr, nil
 }
 
+// converts Postgress array (single string) back into string array
 func ConvertFromPostgresStringArray(str string) ([]string, error) {
 	//format  {text1,text2};
 	strarr := []string{}
@@ -75,7 +77,7 @@ func ConvertFromPostgresStringArray(str string) ([]string, error) {
 
 func (pAuthDB *AuthDb) GetUserRTokensByGUID(guid string) ([]string, error) {
 	query := fmt.Sprintf("SELECT refreshtokens FROM %s where guid = $1", usersTable)
-	row := pAuthDB.pDB.QueryRow(query, guid)
+	row := pAuthDB.DB.QueryRow(query, guid)
 	var str string
 	if err := row.Scan(&str); err != nil {
 		return []string{}, err
@@ -90,9 +92,10 @@ func (pAuthDB *AuthDb) GetUserRTokensByGUID(guid string) ([]string, error) {
 	}
 	return rTokens, nil
 }
+
 func (pAuthDB *AuthDb) GetUsersEmailByGUID(guid string) (string, error) {
 	query := fmt.Sprintf("SELECT name FROM %s where guid = $1", usersTable)
-	row := pAuthDB.pDB.QueryRow(query, guid)
+	row := pAuthDB.DB.QueryRow(query, guid)
 	var str string
 	if err := row.Scan(&str); err != nil {
 		log.Print("Failed to read Email from db")
@@ -107,7 +110,7 @@ func (pAuthDB *AuthDb) UpdateUserRefreshTokens(guid string, rTokens []string) er
 	if err != nil {
 		log.Print("No token given")
 	}
-	pAuthDB.pDB.QueryRow(query, str, guid).Scan(&str)
+	pAuthDB.DB.QueryRow(query, str, guid).Scan(&str)
 
 	return nil
 }

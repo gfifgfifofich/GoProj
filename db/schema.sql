@@ -71,14 +71,6 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: users users_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_id_key UNIQUE (id);
-
-
---
 -- PostgreSQL database dump complete
 --
 

@@ -10,15 +10,15 @@ import (
 type Authorization interface {
 	CreateUser(user goproj.User) (string, error)
 	Access(guid string, clientIP string) (string, string, time.Time, time.Time, error)
-	Refresh(usrRToken string, aToken string, clientIP string) (string, string, time.Time, time.Time, error)
+	Refresh(usrRToken string, aToken string, clientIP string) (string, time.Time, error)
 }
 
 type Service struct {
 	Authorization
 }
 
-func NewService(prepo *repository.Repository) *Service {
+func NewService(repo *repository.Repository) *Service {
 	return &Service{
-		Authorization: NewAuthService(prepo.Authorization),
+		Authorization: NewAuthService(repo.Authorization),
 	}
 }
